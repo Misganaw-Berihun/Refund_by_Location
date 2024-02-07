@@ -55,6 +55,3 @@ To explore and contribute to this project, follow these steps:
 3. Install dependencies
    ```bash
    npm install
-4.Run the dApp locally
-   ```bash
-    npm start
