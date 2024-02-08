@@ -1,14 +1,14 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from "react";
+import CreateEmployee from "./components/CreateEmployee";
+import EmployeeList from "./components/EmployeeList";
 
 function App() {
   return (
-    <h1  className="text-3xl font-bold underline">
-      Hello world!
-    </h1>
-  )
+    <div>
+      <CreateEmployee />
+      <EmployeeList />
+    </div>
+  );
 }
 
-export default App
+export default App;
