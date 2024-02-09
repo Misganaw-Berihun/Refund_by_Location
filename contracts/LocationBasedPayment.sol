@@ -1,90 +1,114 @@
-pragma solidity >=0.7.0 <0.9.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+import "hardhat/console.sol";
 
-contract LocationBasedPayment {
-    address payable public owner;
-    mapping(address => Driver) public drivers;
-    uint256 public rewardAmount;
-    uint256 public durationRequirement;
-    Location public location;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-    event GPSDataSubmitted(
-        address indexed driver,
-        uint256 latitude,
-        uint256 longitude
-    );
-    event ComplianceStatusUpdated(address indexed driver, bool compliant);
-    event RewardPaid(address indexed driver, uint256 amount);
-
-    struct Driver {
-        uint256 lastUpdateTime;
-        bool isCompliant;
-    }
-
-    struct Location {
-        uint256 latitude;
-        uint256 longitude;
+contract ComplianceContract is ERC20 {
+    struct ContractInfo {
+        int256 targetLongitude;
+        int256 targetLatitude;
         uint256 radius;
+        uint duration;
+        uint startTime;
+        bool compliant;
     }
 
-    constructor(
-        address payable _owner,
-        uint256 _rewaredAmount,
-        uint256 _durationRequirement,
-        Location memory _location
-    ) {
-        owner = _owner;
-        rewardAmount = _rewaredAmount;
-        durationRequirement = _durationRequirement;
-        location = _location;
+    mapping(address => ContractInfo) public contractInfo;
+    mapping(address => string) public driverName;
+
+    address public owner;
+
+    event TokenReward(address indexed driver, uint amount);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not the owner");
+        _;
     }
 
-    function submitGPSData(uint256 latitude, uint256 longitude) public {
-        require(msg.sender != owner, "Owner cannot submit data");
+    constructor() ERC20("RToken", "RT") {
+        owner = msg.sender;
+    }
 
-        Driver storage driver = drivers[msg.sender];
-        driver.lastUpdateTime = block.timestamp;
-
-        if (isWithinRange(latitude, longitude)) {
-            updateComplianceStatus(payable(msg.sender), true);
-        } else {
-            updateComplianceStatus(payable(msg.sender), false);
+    function sqrt(int256 x) public pure returns (int256 y) {
+        int256 z = (x + 1) / 2;
+        y = x;
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
         }
-        emit GPSDataSubmitted(msg.sender, latitude, longitude);
     }
 
-    function isWithinRange(
-        uint256 latitude,
-        uint256 longitude
-    ) internal view returns (bool) {
-        uint256 latSq = (location.latitude - latitude) ** 2;
-        uint256 lonSq = (location.longitude - longitude) ** 2;
-        uint256 radiusSq = location.radius ** 2;
-
-        bool inbound = ((latSq + lonSq) <= radiusSq);
-        return inbound;
+    function registerDriver(
+        address driverAddress,
+        string memory name,
+        int targetLongitude,
+        int targetLatitude,
+        uint radius,
+        uint duration
+    ) external onlyOwner {
+        contractInfo[driverAddress] = ContractInfo({
+            targetLongitude: targetLongitude,
+            targetLatitude: targetLatitude,
+            radius: radius,
+            duration: duration,
+            startTime: block.timestamp,
+            compliant: true
+        });
+        driverName[driverAddress] = name;
     }
 
-    function updateComplianceStatus(
-        address payable driverAddress,
-        bool compliant
-    ) internal {
-        Driver storage driver = drivers[driverAddress];
-        driver.isCompliant = compliant;
+    function sendCurrentLocation(
+        int currentLongitude,
+        int currentLatitude
+    ) external {
+        ContractInfo storage info = contractInfo[msg.sender];
 
-        if (compliant && isDurationMet(driverAddress)) {
-            payReward(driverAddress);
+        console.log("Current Time:", block.timestamp);
+        console.log("Start Time:", info.startTime);
+        console.log("Duration:", info.duration);
+        require(
+            block.timestamp < info.startTime + info.duration,
+            "Time duration exceeded"
+        );
+
+        int256 distance = calculateDistance(
+            currentLongitude,
+            currentLatitude,
+            info.targetLongitude,
+            info.targetLatitude
+        );
+
+        if (distance > int(info.radius)) {
+            info.compliant = false;
         }
-        emit ComplianceStatusUpdated(driverAddress, compliant);
+        console.log(info.compliant);
     }
 
-    function isDurationMet(address driverAddress) internal view returns (bool) {
-        Driver storage driver = drivers[driverAddress];
-        uint256 elapsedTime = block.timestamp - driver.lastUpdateTime;
-        return elapsedTime <= durationRequirement;
+    function checkCompliance(address driverAddress) external onlyOwner {
+        ContractInfo storage info = contractInfo[driverAddress];
+        require(
+            block.timestamp >= info.startTime + info.duration,
+            "Duration not completed"
+        );
+
+        if (info.compliant) {
+            uint rewardAmount = 100;
+            transfer(driverAddress, rewardAmount);
+            emit TokenReward(driverAddress, rewardAmount);
+
+            info.compliant = true;
+        }
     }
 
-    function payReward(address payable driverAddress) internal {
-        driverAddress.transfer(rewardAmount);
-        emit RewardPaid(driverAddress, rewardAmount);
+    function calculateDistance(
+        int lon1,
+        int lat1,
+        int lon2,
+        int lat2
+    ) internal pure returns (int) {
+        int256 dx = (lon1 - lon2);
+        int256 dy = (lat1 - lat2);
+        return sqrt(dx * dx + dy * dy);
     }
 }
