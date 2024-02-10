@@ -7,7 +7,61 @@ function classNames(...classes) {
 }
 
 export default function CreateEmployee() {
-  const [agreed, setAgreed] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [employeeAddress, setEmployeeAddress] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [radius, setRadius] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    console.log("handle change");
+    console.log("Name : " + name);
+    console.log("Value: " + value);
+    switch (name) {
+      case "first-name":
+        setFirstName(value);
+        break;
+      case "last-name":
+        setLastName(value);
+        break;
+      case "EmployeeAddress":
+        setEmployeeAddress(value);
+        break;
+      case "latitude":
+        setLatitude(value);
+        break;
+      case "longitude":
+        setLongitude(value);
+        break;
+      case "radius":
+        setRadius(value);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    console.log({
+      firstName,
+      lastName,
+      employeeAddress,
+      latitude,
+      longitude,
+      radius,
+    });
+
+    setFirstName("");
+    setLastName("");
+    setEmployeeAddress("");
+    setLatitude("");
+    setLongitude("");
+    setRadius("");
+  };
 
   return (
     <div className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
@@ -32,6 +86,7 @@ export default function CreateEmployee() {
         </p>
       </div>
       <form
+        onSubmit={handleSubmit}
         action="#"
         method="POST"
         className="mx-auto mt-16 max-w-xl sm:mt-20"
@@ -49,6 +104,8 @@ export default function CreateEmployee() {
                 type="text"
                 name="first-name"
                 id="first-name"
+                value={firstName}
+                onChange={handleChange}
                 autoComplete="given-name"
                 className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
@@ -66,6 +123,8 @@ export default function CreateEmployee() {
                 type="text"
                 name="last-name"
                 id="last-name"
+                value={lastName}
+                onChange={handleChange}
                 autoComplete="family-name"
                 className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
@@ -83,6 +142,8 @@ export default function CreateEmployee() {
                 type="text"
                 name="EmployeeAddress"
                 id="EmployeeAddress"
+                value={employeeAddress}
+                onChange={handleChange}
                 autoComplete="organization"
                 className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
@@ -102,6 +163,8 @@ export default function CreateEmployee() {
                   type="text"
                   name="latitude"
                   id="latitude"
+                  value={latitude}
+                  onChange={handleChange}
                   autoComplete="given-name"
                   className="block w-21 rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
@@ -119,6 +182,8 @@ export default function CreateEmployee() {
                   type="text"
                   name="longitude"
                   id="longitude"
+                  value={longitude}
+                  onChange={handleChange}
                   autoComplete="family-name"
                   className="block w-21 rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
@@ -136,6 +201,8 @@ export default function CreateEmployee() {
                   type="text"
                   name="radius"
                   id="radius"
+                  value={radius}
+                  onChange={handleChange}
                   autoComplete="organization"
                   className="block w-20 rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
