@@ -1,10 +1,20 @@
 import { useState } from "react";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
-import { Switch } from "@headlessui/react";
+// import { ChevronDownIcon } from "@heroicons/react/20/solid";
+// import { Switch } from "@headlessui/react";
+import { ethers } from "ethers";
+import ComplianceContractABI from "../ComplianceContractABI.json";
+const contractAddress = "0xABD275b4A0Fcef6Dbf78CE361E019Cd2d3457c7a";
+const provider = new ethers.providers.Web3Provider(window.ethereum);
+const signer = provider.getSigner();
+const contract = new ethers.Contract(
+  contractAddress,
+  ComplianceContractABI,
+  signer
+);
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+// function classNames(...classes) {
+//   return classes.filter(Boolean).join(" ");
+// }
 
 export default function CreateEmployee() {
   const [firstName, setFirstName] = useState("");
@@ -13,6 +23,26 @@ export default function CreateEmployee() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [radius, setRadius] = useState("");
+
+  async function registerDriver(
+    driverAddress,
+    name,
+    targetLongitude,
+    targetLatitude,
+    radius,
+    duration
+  ) {
+    const tx = await contract.registerDriver(
+      driverAddress,
+      name,
+      targetLongitude,
+      targetLatitude,
+      radius,
+      duration
+    );
+    await tx.wait();
+    console.log("Driver registered successfully");
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,15 +76,14 @@ export default function CreateEmployee() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    console.log({
-      firstName,
-      lastName,
+    registerDriver(
       employeeAddress,
-      latitude,
-      longitude,
-      radius,
-    });
-
+      `${firstName} ${lastName}`,
+      Math.floor(parseFloat(latitude)),
+      Math.floor(parseFloat(longitude)),
+      Math.floor(parseFloat(radius)),
+      1000
+    );
     setFirstName("");
     setLastName("");
     setEmployeeAddress("");
