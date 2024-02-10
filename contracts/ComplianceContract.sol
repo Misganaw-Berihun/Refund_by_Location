@@ -15,11 +15,18 @@ contract ComplianceContract {
         bool compliant;
     }
 
+    struct DriverInfo {
+        address driverAddress;
+        string name;
+        ContractInfo contractInfo;
+    }
+
     mapping(address => ContractInfo) public contractInfo;
     mapping(address => string) public driverName;
 
     MyToken public token;
     address public owner;
+    DriverInfo[] public allDrivers;
 
     event TokenReward(address indexed driver, uint amount);
 
@@ -50,7 +57,7 @@ contract ComplianceContract {
         uint radius,
         uint duration
     ) external onlyOwner {
-        contractInfo[driverAddress] = ContractInfo({
+        ContractInfo memory newContractInfo = ContractInfo({
             targetLongitude: targetLongitude,
             targetLatitude: targetLatitude,
             radius: radius,
@@ -58,7 +65,20 @@ contract ComplianceContract {
             startTime: block.timestamp,
             compliant: true
         });
+        contractInfo[driverAddress] = newContractInfo;
         driverName[driverAddress] = name;
+
+        DriverInfo memory newDriverInfo = DriverInfo({
+            driverAddress: driverAddress,
+            name: name,
+            contractInfo: newContractInfo
+        });
+
+        allDrivers.push(newDriverInfo);
+    }
+
+    function getAllDriversInfo() external view returns (DriverInfo[] memory) {
+        return allDrivers;
     }
 
     function sendCurrentLocation(
@@ -88,19 +108,22 @@ contract ComplianceContract {
         console.log(info.compliant);
     }
 
-    function checkCompliance(address driverAddress) external onlyOwner {
+    function checkCompliance(address driverAddress) external returns (bool) {
         ContractInfo storage info = contractInfo[driverAddress];
-        require(
-            block.timestamp >= info.startTime + info.duration,
-            "Duration not completed"
-        );
 
-        if (info.compliant) {
+        if (
+            info.compliant && block.timestamp >= info.startTime + info.duration
+        ) {
             uint rewardAmount = 5;
             token.transfer(driverAddress, rewardAmount);
             emit TokenReward(driverAddress, rewardAmount);
         }
-        info.compliant = true;
+
+        if (block.timestamp >= info.startTime + info.duration) {
+            info.compliant = true;
+        }
+
+        return info.compliant;
     }
 
     function calculateDistance(
