@@ -28,9 +28,9 @@ contract ComplianceContract {
         _;
     }
 
-    constructor(address initialOwner) {
+    constructor() {
         owner = msg.sender;
-        token = MyToken(initialOwner);
+        token = MyToken(owner);
     }
 
     function sqrt(int256 x) public pure returns (int256 y) {
